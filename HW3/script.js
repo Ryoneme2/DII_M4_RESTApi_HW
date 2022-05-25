@@ -1,30 +1,12 @@
-const btn = document.getElementById("btn");
 const btnSubmit = document.getElementById("btn-submit");
-var index = 1;
 
-const singleStudentResult = document.getElementById("sinigle_student_result");
-const listStudentResult = document.getElementById("output");
 const addUserDetail = document.getElementById("addUserDetail");
-const AllStudentMenu = document.getElementById("AllStudentMenu");
-const AddMenu = document.getElementById("AddMenu");
-const AddStudent = document.getElementById("AddStudent");
 
-AllStudentMenu.addEventListener("click", () => {
-  hideAll()
-  listStudentResult.style.display = "block";
-  showStdData();
-});
-AddMenu.addEventListener("click", () => {
-  hideAll()
-  addUserDetail.style.display = "block";
-});
 // AddStudent.addEventListener("click", () => {
 //   singleStudentResult.style.display = "block";
 // })
 
 const hideAll = () => {
-  singleStudentResult.style.display = "none";
-  listStudentResult.style.display = "none";
   addUserDetail.style.display = "none";
 };
 
@@ -84,6 +66,7 @@ const addStdToTableImg = (index, student) => {
   let img = document.createElement("img");
   let btnCell = document.createElement("button");
   let btnCell2 = document.createElement("button");
+  let btnCell3 = document.createElement("button");
   img.src = student.image;
   // img.setAttribute("width", "70px");
   img.setAttribute("height", "100px");
@@ -104,18 +87,18 @@ const addStdToTableImg = (index, student) => {
   btnCell2.setAttribute("id", "btn-info");
   btnCell2.setAttribute("onclick", `showSingleInfo(${student.id})`);
   btnCell2.classList.add("btn");
-  btnCell2.classList.add("btn-info");
+  btnCell2.classList.add("btn-primary");
   btnCell2.classList.add("text-white");
   cell.appendChild(btnCell2);
   row.appendChild(cell);
   cell = document.createElement("td");
-  btnCell = document.createElement("button")
-  btnCell.innerHTML = "edit";
-  btnCell.setAttribute("id", "btn-edit");
-  btnCell.setAttribute("onclick", `detById(${student.id})`);
-  btnCell.classList.add("btn");
-  btnCell.classList.add("btn-danger");
-  cell.appendChild(btnCell);
+  btnCell3.innerHTML = "edit";
+  btnCell3.setAttribute("id", "btn-edit");
+  btnCell3.setAttribute("onclick", `showEditData(${student.id})`);
+  btnCell3.classList.add("btn");
+  btnCell3.classList.add("text-white");
+  btnCell3.classList.add("btn-info");
+  cell.appendChild(btnCell3);
   row.appendChild(cell);
   cell = document.createElement("td");
   btnCell.innerHTML = "delete";
@@ -128,25 +111,57 @@ const addStdToTableImg = (index, student) => {
   tableBody.appendChild(row);
 };
 
-const addStdToDb = (student) => {
-  fetch("https://dv-student-backend-2019.appspot.com/students", {
-    method: "POST",
-    body: JSON.stringify(student),
-    headers: {
-      "Content-Type": "application/json",
-    },
-  })
-    .then((response) => {
-      if (response.ok) {
-        return response.json();
-      }
-      throw new Error("Add std failed");
-    })
-    .then((data) => {
-      console.log(data);
-      addStudentData(data);
-    })
-    .catch((e) => console.error(e));
+const showEditData = async (id) => {
+  addUserDetail.style.display = "block";
+
+  const idUser = document.getElementById("idUser");
+  const nameInput = document.getElementById("nameInput");
+  const surnameInput = document.getElementById("surnameInput");
+  const studentIdInput = document.getElementById("stdIdInput");
+  const gpaInput = document.getElementById("gpaInput");
+  const imageInput = document.getElementById("imageInput");
+
+  const singleUserData = await getSingleUserData(id);
+
+  idUser.value = singleUserData.id;
+  nameInput.value = singleUserData.name;
+  surnameInput.value = singleUserData.surname;
+  studentIdInput.value = singleUserData.studentId;
+  gpaInput.value = singleUserData.gpa;
+  imageInput.value = singleUserData.image;
+};
+
+const onSubmitEdit = async () => {
+  const id = document.getElementById("idUser").value;
+  const name = document.getElementById("nameInput").value;
+  const surname = document.getElementById("surnameInput").value;
+  const studentId = document.getElementById("stdIdInput").value;
+  const gpa = document.getElementById("gpaInput").value;
+  const image = document.getElementById("imageInput").value;
+
+  const editUser = {
+    id,
+    name,
+    surname,
+    studentId,
+    gpa,
+    image,
+  };
+
+  const conf = confirm("Are you sure you want to edit this user?");
+  if (conf) {
+    await fetch(`https://dv-student-backend-2019.appspot.com/students`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(editUser),
+    });
+    // console.log(data);
+    showStdData();
+    hideAll();
+  }
+  return;
 };
 
 const detById = (id) => {
@@ -173,41 +188,12 @@ const detById = (id) => {
   }
 };
 
-const delTheerakarn = async (student) => {
-  const res = await fetch(
-    "https://dv-student-backend-2019.appspot.com/students"
+const getSingleUserData = async (id) => {
+  const response = await fetch(
+    `https://dv-student-backend-2019.appspot.com/student/${id}`
   );
-  const userData = await res.json();
-
-  const idTheerakarn = userData
-    .filter((v) => v !== null)
-    .map((v, i) => {
-      console.log(v);
-      if (v.studentId === "642110319") {
-        return v.id;
-      }
-    })
-    .filter((v) => v !== undefined);
-
-  console.log({ idTheerakarn });
-
-  idTheerakarn.forEach(async (v) => {
-    // console.log(v);
-    const response = await fetch(
-      `https://dv-student-backend-2019.appspot.com/student/${v}`,
-      {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      }
-    );
-    if (!response.status === 200) {
-      throw new Error("Delete failed");
-    }
-    const data = await response.json();
-    console.log(data);
-  });
+  const data = await response.json();
+  return data;
 };
 
 const showStdData = () => {
@@ -227,6 +213,7 @@ const showStdData = () => {
 
 function onLoad() {
   hideAll();
+  showStdData();
 }
 
 const showSingleInfo = (id) => {
@@ -244,31 +231,4 @@ const showSingleInfo = (id) => {
     });
 };
 
-btn.addEventListener("click", () => {
-  const input = document.getElementById("input-text").value;
-
-  fetch(`https://dv-student-backend-2019.appspot.com/student/${input}`)
-    .then((response) => {
-      return response.json();
-    })
-    .then((data) => {
-      // addStdToTableImg(index, data);
-      addStudentData(data);
-      index++;
-    })
-    .catch((err) => {
-      console.error(err);
-    });
-});
-
-btnSubmit.addEventListener("click", () => {
-  const dataStd = {
-    studentId: document.getElementById("stdIdInput").value,
-    name: document.getElementById("nameInput").value,
-    surname: document.getElementById("surnameInput").value,
-    gpa: parseInt(document.getElementById("gpaInput").value),
-    image: document.getElementById("imageInput").value,
-  };
-
-  addStdToDb(dataStd);
-});
+btnSubmit.addEventListener("click", onSubmitEdit);
